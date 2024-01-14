@@ -1,0 +1,100 @@
+<?php
+include 'header3.php';
+
+// Start the session
+session_start();
+
+// Check if the user is logged in
+if (!isset($_SESSION['id'])) {
+    header('Location: login.php'); // Redirect to the login page if not logged in
+    exit;
+}
+
+require_once 'includes/dbconn.php';
+
+// Fetch user details from the database
+$userId = $_SESSION['id'];
+$sqlUser = "SELECT * FROM user WHERE id = ?";
+$stmtUser = $conn->prepare($sqlUser);
+$stmtUser->bind_param("i", $userId);
+$stmtUser->execute();
+$resultUser = $stmtUser->get_result();
+
+if ($resultUser->num_rows > 0) {
+    $user = $resultUser->fetch_assoc();
+
+     // Fetch role details from the database
+     $roleId = $user['role_id'];
+     $sqlRole = "SELECT * FROM roles WHERE id = ?";
+     $stmtRole = $conn->prepare($sqlRole);
+     $stmtRole->bind_param("i", $roleId);
+     $stmtRole->execute();
+     $resultRole = $stmtRole->get_result();
+ 
+     if ($resultRole->num_rows > 0) {
+         $role = $resultRole->fetch_assoc();
+         $roleName = $role['roles_name'];
+     } else {
+         // Role not found, handle accordingly
+         $roleName = "Unknown Role";
+     }
+
+} else {
+    // User not found, handle accordingly
+    echo "User not found!";
+    exit;
+}
+
+?>
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <title>User Profile</title>
+
+    <link rel="stylesheet" href="assets/vendors/fontawesome-free/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>User Profile</h1>
+        <form method="post" action="profileupdate.php"> <!-- Specify the action script -->
+            <div class="form-group">
+                <label for="username">Username: </label>
+                <input type="text" class="form-control" id="username" name="username" value="<?php echo $user['username']; ?>">
+            </div>
+
+            <div class="form-group">
+                <label for="name">Name: </label>
+                <input type="text" class="form-control" id="name" name="name" value="<?php echo $user['name']; ?>">
+            </div>
+
+            <div class="form-group">
+                <label for="number">Number: </label>
+                <input type="text" class="form-control" id="number" name="number" value="<?php echo $user['number']; ?>">
+            </div>
+
+            <div class="form-group">
+                <label for="role">Role: </label>
+                <input class="form-control" type="text" value="<?php echo $roleName; ?>" id="role" name="role" aria-label="Disabled input example" disabled readonly>
+            </div>
+
+            <input class="btn btn-primary" name="submit" type="submit" value="Update Profile">
+            <button class="btn btn-danger" onclick="location.href='profile.php';" type="button">Cancel</button>
+        </form>
+    </div>
+</body>
+
+</html>
+
+
+
+<?php
+include 'footer.php';
+?>
